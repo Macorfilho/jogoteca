@@ -1,10 +1,18 @@
 from flask import Flask, render_template, request, redirect, session, flash, url_for
 from models.jogo import Jogo
+from models.usuario import Usuario
 
 jogo1 = Jogo('God of War', 'Ação', 'PS4')
 jogo2 = Jogo('Fifa 22', 'Esporte', 'PS4')
 jogo3 = Jogo('Minecraft', 'Aventura', 'PC')
 lista = [jogo1, jogo2, jogo3]
+
+usuario1 = Usuario('Lucas', 'lucas', 'alohomora')
+usuario2 = Usuario('Ana', 'ana', 'pao_de_acucar')
+usuario3 = Usuario('Marcelo', '98828', 'alohomora')
+usuarios = {usuario1.nickname: usuario1,
+            usuario2.nickname: usuario2,
+            usuario3.nickname: usuario3}
 
 app = Flask(__name__)
 
@@ -37,11 +45,13 @@ def login():
 
 @app.route('/autenticar', methods=['POST'])
 def autenticar():
-    if 'alohomora' == request.form['senha']:
-        session['usuario_logado'] = request.form['usuario']
-        flash(session['usuario_logado'] + ' logado com sucesso!')
-        proxima_pagina = request.form['proxima']
-        return redirect(proxima_pagina)
+    if request.form['usuario'] in usuarios:
+        usuario = usuarios[request.form['usuario']]
+        if request.form['senha'] == usuario.senha:
+            session['usuario_logado'] = usuario.nickname
+            flash(usuario.nome + ' logado com sucesso!')
+            proxima_pagina = request.form['proxima']
+            return redirect(proxima_pagina)
     else:
         flash('Usuário ou senha inválidos!')
         return redirect(url_for('login'))
