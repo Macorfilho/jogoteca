@@ -3,13 +3,15 @@ blinker==1.9.0
 click==8.1.8
 Flask==3.0.0
 Flask-Bcrypt==0.7.1
-Flask-SQLAlchemy==2.5.1
+Flask-SQLAlchemy==3.1.1
 Flask-WTF==1.0.0
 itsdangerous==2.2.0
 Jinja2==3.1.6
 MarkupSafe==3.0.2
 mysql-connector-python==8.0.28
+mysqlclient==2.2.7
 protobuf==6.30.2
+PyMySQL==1.1.1
 SQLAlchemy==2.0.40
 typing_extensions==4.13.2
 Werkzeug==3.1.3

@@ -1,36 +1,26 @@
 from flask import Flask, render_template, request, redirect, session, flash, url_for
-from models.jogo import Jogo
-from models.usuario import Usuario
+from models.jogos import Jogos
+from models import db
+from models.usuarios import Usuarios
 from flask_sqlalchemy import SQLAlchemy
-
-jogo1 = Jogo('God of War', 'Ação', 'PS4')
-jogo2 = Jogo('Fifa 22', 'Esporte', 'PS4')
-jogo3 = Jogo('Minecraft', 'Aventura', 'PC')
-lista = [jogo1, jogo2, jogo3]
-
-usuario1 = Usuario('Lucas', 'lucas', 'alohomora')
-usuario2 = Usuario('Ana', 'ana', 'pao_de_acucar')
-usuario3 = Usuario('Marcelo', '98828', 'alohomora')
-usuarios = {usuario1.nickname: usuario1,
-            usuario2.nickname: usuario2,
-            usuario3.nickname: usuario3}
 
 app = Flask(__name__)
 app.secret_key = 'alura'
-db = SQLAlchemy(app)
 app.config['SQLALCHEMY_DATABASE_URI'] = \
     '{SGDB}://{user}:{password}@{host}:{port}/{database}'.format(
-        SGBD = 'mysql+pymysql',
+        SGDB = 'mysql+pymysql',
         user = 'root',
         password = '',
         host = 'localhost',
         port = '3306',
         database = 'jogoteca'
     )
+db.init_app(app)
 
 
 @app.route('/')
 def index():
+    lista = Jogos.query.order_by(Jogos.id)
     return render_template('lista.html', titulo='Jogos', jogos=lista)
 
 @app.route('/novo')
