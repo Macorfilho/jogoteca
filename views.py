@@ -1,8 +1,10 @@
-from flask import render_template, request, redirect, session, flash, url_for
+from flask import render_template, request, redirect, session, flash, url_for, send_from_directory
 from models.jogos import Jogos
 from models import db
 from models.usuarios import Usuarios
 from jogoteca import app
+from helpers import recupera_imagem, deletar_arquivo
+import time
 
 @app.route('/')
 def index():
@@ -20,9 +22,10 @@ def novo():
 def editar(id):
     if 'usuario_logado' not in session or session['usuario_logado'] == None:
         flash('Você precisa fazer login para editar um jogo!')
-        return redirect(url_for('login', proxima=url_for('editar')))
+        return redirect(url_for('login', proxima=url_for('editar', id=id)))
     jogo = Jogos.query.filter_by(id=id).first()
-    return render_template('editar.html', titulo='Editar Jogo', jogo=jogo)
+    capa_jogo = recupera_imagem(jogo.id)
+    return render_template('editar.html', titulo='Editar Jogo', jogo=jogo, capa_jogo=capa_jogo)
 
 @app.route('/atualizar', methods=['POST'])
 def atualizar():
@@ -32,6 +35,13 @@ def atualizar():
     jogo.console = request.form['console']
     db.session.add(jogo)
     db.session.commit()
+    arquivo = request.files['arquivo']
+    upload_path = app.config['UPLOAD_PATH']
+    timestamp = time.time()
+    if arquivo and arquivo.filename:
+        # only delete and save when a new file is uploaded
+        deletar_arquivo(jogo.id)
+        arquivo.save(f'{upload_path}/{jogo.id}-{timestamp}.jpg')
     flash('Jogo atualizado com sucesso!')
     return redirect(url_for('index'))
 
@@ -40,7 +50,8 @@ def criar():
     nome = request.form['nome']
     categoria = request.form['categoria']
     console = request.form['console']
-    
+    arquivo = request.files['arquivo']
+    upload_path = app.config['UPLOAD_PATH']
     jogo = Jogos.query.filter_by(nome=nome).first()
     if jogo:
         flash('Jogo já existe!')
@@ -48,6 +59,8 @@ def criar():
     novo_jogo = Jogos(nome=nome, categoria=categoria, console=console)
     db.session.add(novo_jogo)
     db.session.commit()
+    timestamp = time.time()
+    arquivo.save(f'{upload_path}/{novo_jogo.id}-{timestamp}.jpg')
     flash('Jogo adicionado com sucesso!')
     
     return redirect(url_for('index'))
@@ -56,10 +69,11 @@ def criar():
 def deletar(id):
     if 'usuario_logado' not in session or session['usuario_logado'] == None:
         flash('Você precisa fazer login para excluir um jogo!')
-        return redirect(url_for('login', proxima=url_for('deletar')))
+        return redirect(url_for('login', proxima=url_for('deletar', id=id)))
     jogo = Jogos.query.filter_by(id=id).first()
     db.session.delete(jogo)
     db.session.commit()
+    deletar_arquivo(jogo.id)
     flash('Jogo excluído com sucesso!')
     return redirect(url_for('index'))
     
@@ -86,3 +100,7 @@ def logout():
     session['usuario_logado'] = None
     flash('Deslogado com sucesso!')
     return redirect(url_for('index'))
+
+@app.route('/uploads/<nome_arquivo>')
+def imagem(nome_arquivo):
+    return send_from_directory('static/uploads', nome_arquivo)
